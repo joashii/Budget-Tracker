@@ -9,10 +9,9 @@ export default function HistoryView({ userEmail }) {
   const [loadingTable, setLoadingTable] = useState(true);
 
   const [enabled, setEnabled] = useState(false);
-  const [times, setTimes] = useState([]);
   const [notifyEmail, setNotifyEmail] = useState("");
-  const [newTime, setNewTime] = useState("08:00");
   const [sheetUrl, setSheetUrl] = useState(null);
+  const [sendingTest, setSendingTest] = useState(false);
 
   function fmt(n) {
     return `₱${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
@@ -34,7 +33,6 @@ export default function HistoryView({ userEmail }) {
     try {
       const s = await api.getNotifSettings();
       setEnabled(!!s.enabled);
-      setTimes(s.times || []);
       setNotifyEmail(s.notifyEmail || userEmail || "");
       const { url } = await api.getSpreadsheetUrl();
       setSheetUrl(url);
@@ -52,23 +50,22 @@ export default function HistoryView({ userEmail }) {
     api.saveNotifSettings(next).catch((e) => showToast(e.message, "error"));
   }
 
-  function addTime() {
-    if (times.includes(newTime)) return;
-    const next = [...times, newTime].sort();
-    setTimes(next);
-    save({ enabled, times: next, notifyEmail });
-  }
-
-  function removeTime(t) {
-    const next = times.filter((x) => x !== t);
-    setTimes(next);
-    save({ enabled, times: next, notifyEmail });
-  }
-
   function toggleEnabled() {
     const next = !enabled;
     setEnabled(next);
-    save({ enabled: next, times, notifyEmail });
+    save({ enabled: next, notifyEmail });
+  }
+
+  async function sendTest() {
+    setSendingTest(true);
+    try {
+      const res = await api.sendTestNotification();
+      showToast(`Test email sent to ${res.sentTo}`, "success");
+    } catch (e) {
+      showToast(e.message, "error");
+    } finally {
+      setSendingTest(false);
+    }
   }
 
   const sortedRows = rows ? [...rows].sort((a, b) => (Number(b.spendings) || 0) - (Number(a.spendings) || 0)) : [];
@@ -146,7 +143,7 @@ export default function HistoryView({ userEmail }) {
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
               <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
             </svg>
-            Daily Reminder
+            Daily Reminder <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginLeft: 6 }}>(Coming soon)</span>
           </div>
           <label className="notif-toggle-wrap" title="Enable daily spending reminder">
             <input type="checkbox" checked={enabled} onChange={toggleEnabled} />
@@ -156,7 +153,9 @@ export default function HistoryView({ userEmail }) {
 
         {enabled && (
           <div className="notif-body" style={{ display: "flex" }}>
-            <p className="notif-desc">Get an email nudge so you don't forget to log your spendings.</p>
+            <p className="notif-desc">
+              You'll get one email nudge every day at 8:00 PM to remind you to log your spendings.
+            </p>
 
             <div className="form-row">
               <div className="form-label">Email</div>
@@ -164,43 +163,18 @@ export default function HistoryView({ userEmail }) {
                 type="email"
                 value={notifyEmail}
                 onChange={(e) => setNotifyEmail(e.target.value)}
-                onBlur={() => save({ enabled, times, notifyEmail })}
+                onBlur={() => save({ enabled, notifyEmail })}
               />
             </div>
 
-            <div className="notif-times-list">
-              {times.map((t) => (
-                <span
-                  key={t}
-                  className="time-btn active"
-                  style={{ width: "auto", padding: "6px 14px", cursor: "pointer" }}
-                  onClick={() => removeTime(t)}
-                  title="Click to remove"
-                >
-                  {t} ✕
-                </span>
-              ))}
-            </div>
-
-            <div className="action-btn-group" style={{ width: "100%", maxWidth: 581 }}>
-              <input
-                type="time"
-                value={newTime}
-                onChange={(e) => setNewTime(e.target.value)}
-                style={{
-                  flex: 1,
-                  background: "rgba(255,255,255,0.05)",
-                  border: "1px solid var(--border-color)",
-                  borderRadius: 8,
-                  color: "#fff",
-                  padding: "12px",
-                  colorScheme: "dark",
-                }}
-              />
-              <button className="submit-action-btn" onClick={addTime} style={{ flex: "none", width: "auto", padding: "12px 24px" }}>
-                Add time
-              </button>
-            </div>
+            <button
+              className="submit-action-btn"
+              onClick={sendTest}
+              disabled={sendingTest}
+              style={{ width: "100%", maxWidth: 581 }}
+            >
+              {sendingTest ? "Sending..." : "Send test email now"}
+            </button>
           </div>
         )}
       </div>

@@ -1,5 +1,6 @@
 const express = require("express");
 const budgetService = require("../services/budgetService");
+const emailService = require("../services/emailService");
 const { requireAuth } = require("../middleware/auth");
 
 const router = express.Router();
@@ -90,5 +91,14 @@ router.get("/notifications", handle((req) =>
 router.put("/notifications", handle((req) =>
   budgetService.saveNotifSettings(req.ctx.authClient, req.ctx.spreadsheetId, req.body)
 ));
+// Sends the reminder email right now, bypassing the daily schedule entirely -
+// lets the user confirm SMTP/email is actually working without waiting until 8PM.
+router.post("/notifications/test", handle(async (req) => {
+  const settings = await budgetService.getNotifSettings(req.ctx.authClient, req.ctx.spreadsheetId);
+  const toEmail = settings.notifyEmail || req.ctx.email;
+  if (!toEmail) throw new Error("No email address on file to send the test to.");
+  await emailService.sendSpendingReminderEmail(toEmail);
+  return { ok: true, sentTo: toEmail };
+}));
 
 module.exports = router;

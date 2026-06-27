@@ -332,15 +332,18 @@ async function deleteDebtRecord(authClient, spreadsheetId, idStr) {
 }
 
 // ---------- Notification settings (Settings tab replaces PropertiesService) ----------
+// Simplified to a single daily reminder (sent at a fixed 8PM PH time by Vercel
+// Cron - see vercel.json) instead of a user-chosen list of times.
 
 async function getNotifSettings(authClient, spreadsheetId) {
   const rows = await sheetsApi.getValues(authClient, spreadsheetId, `'Settings'!A2:B`);
   const row = rows.find((r) => r[0] === "notifSettings");
-  if (!row) return { enabled: false, times: [], notifyEmail: "" };
+  if (!row) return { enabled: false, notifyEmail: "" };
   try {
-    return JSON.parse(row[1]);
+    const parsed = JSON.parse(row[1]);
+    return { enabled: !!parsed.enabled, notifyEmail: parsed.notifyEmail || "" };
   } catch {
-    return { enabled: false, times: [], notifyEmail: "" };
+    return { enabled: false, notifyEmail: "" };
   }
 }
 

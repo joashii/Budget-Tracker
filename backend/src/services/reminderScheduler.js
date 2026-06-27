@@ -4,17 +4,16 @@ const budgetService = require("./budgetService");
 const emailService = require("./emailService");
 
 /**
- * Checks every user's saved notification settings against the current time
- * and sends an email for any match. Called either:
- *  - by Vercel Cron hitting GET /api/cron/reminders (production)
- *  - by a local setInterval in server.js (local `npm run dev`)
+ * Sends the daily reminder email to every user who has notifications enabled.
+ * There's only one fixed send time now (8:00 PM PH time / 12:00 UTC), baked
+ * into the Vercel Cron schedule in vercel.json — so this no longer needs to
+ * match against a list of saved times, just check the enabled flag.
+ *
+ * Called either:
+ *  - by Vercel Cron hitting GET /api/cron/reminders once a day (production)
+ *  - manually for testing via POST /api/notifications/test (instant, single user)
  */
 async function runReminderCheck() {
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2, "0");
-  const mm = String(now.getMinutes()).padStart(2, "0");
-  const nowStr = `${hh}:${mm}`;
-
   const userIds = await userStore.getAllUserIds();
   let sent = 0;
 
@@ -25,7 +24,7 @@ async function runReminderCheck() {
     try {
       const authClient = google.clientFromRefreshToken(user.refreshToken);
       const settings = await budgetService.getNotifSettings(authClient, user.spreadsheetId);
-      if (settings.enabled && settings.times && settings.times.includes(nowStr)) {
+      if (settings.enabled) {
         const toEmail = settings.notifyEmail || user.email;
         if (toEmail) {
           await emailService.sendSpendingReminderEmail(toEmail);
@@ -37,14 +36,7 @@ async function runReminderCheck() {
     }
   }
 
-  return { checked: userIds.length, sent, at: nowStr };
+  return { checked: userIds.length, sent };
 }
 
-/** Local-dev convenience only: re-runs the check every minute via setInterval. */
-function startLocalPolling() {
-  setInterval(() => {
-    runReminderCheck().catch((e) => console.error("Reminder poll failed:", e));
-  }, 60 * 1000);
-}
-
-module.exports = { runReminderCheck, startLocalPolling };
+module.exports = { runReminderCheck };

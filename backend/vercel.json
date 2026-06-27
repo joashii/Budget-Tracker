@@ -2,5 +2,8 @@
   "rewrites": [
     { "source": "/auth/:path*", "destination": "/api/index" },
     { "source": "/api/:path*", "destination": "/api/index" }
+  ],
+  "crons": [
+    { "path": "/api/cron/reminders", "schedule": "0 12 * * *" }
   ]
 }
