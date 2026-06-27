@@ -13,6 +13,14 @@ const path = require("path");
 
 const USING_KV = !!process.env.KV_REST_API_URL;
 
+console.log("USING_KV:", USING_KV);
+console.log(
+  "KV TOKEN PREFIX:",
+  process.env.KV_REST_API_TOKEN
+    ? process.env.KV_REST_API_TOKEN.substring(0, 6)
+    : "missing"
+);
+
 let kv = null;
 if (USING_KV) {
   // Lazy require so local dev doesn't need @vercel/kv installed/configured.
