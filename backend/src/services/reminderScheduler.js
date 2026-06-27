@@ -5,7 +5,7 @@ const emailService = require("./emailService");
 
 /**
  * Sends the daily reminder email to every user who has notifications enabled.
- * There's only one fixed send time now (8:00 PM PH time / 12:00 UTC), baked
+ * There's only one fixed send time now (8:00 AM PH time / 00:00 UTC), baked
  * into the Vercel Cron schedule in vercel.json — so this no longer needs to
  * match against a list of saved times, just check the enabled flag.
  *

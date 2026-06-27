@@ -154,7 +154,7 @@ export default function HistoryView({ userEmail }) {
         {enabled && (
           <div className="notif-body" style={{ display: "flex" }}>
             <p className="notif-desc">
-              You'll get one email nudge every day at 8:00 PM to remind you to log your spendings.
+              You'll get one email nudge every day at 8:00 AM to remind you to log your spendings.
             </p>
 
             <div className="form-row">
@@ -171,7 +171,7 @@ export default function HistoryView({ userEmail }) {
               className="submit-action-btn"
               onClick={sendTest}
               disabled={sendingTest}
-              style={{ width: "100%", maxWidth: 581 }}
+              style={{ width: "100%" }}
             >
               {sendingTest ? "Sending..." : "Send test email now"}
             </button>

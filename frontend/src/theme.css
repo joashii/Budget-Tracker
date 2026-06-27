@@ -1376,6 +1376,13 @@ input[type=number] {
     overflow: visible !important;
   }
 
+  /* The email field & test button shouldn't be artificially capped at 581px
+     like the transaction forms - let them fill the full panel width. */
+  .notif-panel .form-row,
+  .notif-panel .submit-action-btn {
+    max-width: 100% !important;
+  }
+
   #notifBody,
   .notif-body {
     display: flex !important;
@@ -1764,3 +1771,45 @@ input[type=number] {
       font-size: 16px;
       font-weight: 600;
     }
+/* ==========================================
+   EXTRA-SMALL PHONES (≤ 390px, e.g. iPhone SE)
+   ========================================== */
+@media (max-width: 390px) {
+  h1.brand-title {
+    font-size: 22px;
+  }
+  .nav-bar {
+    padding: 0 4px;
+    height: 52px;
+  }
+  .nav-tab {
+    width: 38px;
+    height: 38px;
+  }
+  .input-panel {
+    padding: 16px 12px 20px;
+  }
+  .balance-amount {
+    font-size: 24px;
+  }
+  .history-title {
+    font-size: 13px;
+    flex-wrap: wrap;
+  }
+  .notif-desc {
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+  .form-label {
+    font-size: 11px;
+    padding: 0 12px;
+  }
+  .form-row input {
+    font-size: 15px;
+    padding: 0 12px;
+  }
+  .submit-action-btn {
+    font-size: 14px;
+    padding: 14px 10px;
+  }
+}
