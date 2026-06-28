@@ -3,6 +3,7 @@ import { api, auth } from "./api/client";
 import Fireflies from "./components/Fireflies";
 import LoadingScreen from "./components/LoadingScreen";
 import { ToastProvider } from "./components/Toast";
+import SettingsModal from "./components/SettingsModal";
 import Login from "./pages/Login";
 import HistoryView from "./pages/HistoryView";
 import BudgetView from "./pages/BudgetView";
@@ -50,11 +51,22 @@ const SheetIcon = () => (
   </svg>
 );
 
+const SettingsIcon = () => (
+  <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none">
+    <circle cx="12" cy="12" r="3"></circle>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+  </svg>
+);
+
 function AppShell() {
   const [user, setUser] = useState(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   const [tab, setTab] = useState("budget"); // matches original default active = view-budget
+
+  const [showSettings, setShowSettings] = useState(false);
+  const [alwaysHide, setAlwaysHide] = useState(false);
+  const [moneyHidden, setMoneyHidden] = useState(false);
 
   const params = new URLSearchParams(window.location.search);
   const authError = params.get("authError");
@@ -66,6 +78,31 @@ function AppShell() {
       .catch(() => setUser(null))
       .finally(() => setCheckingAuth(false));
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    api.getMoneySettings()
+      .then((s) => {
+        setAlwaysHide(s.alwaysHide);
+        setMoneyHidden(s.alwaysHide ? true : !s.visible);
+      })
+      .catch(() => {});
+  }, [user]);
+
+  function toggleMoneyHidden() {
+    const next = !moneyHidden;
+    setMoneyHidden(next);
+    // Only the manual show/hide state needs saving here - alwaysHide itself
+    // is changed separately via toggleAlwaysHide.
+    api.saveMoneySettings({ alwaysHide, visible: !next }).catch(() => {});
+  }
+
+  function toggleAlwaysHide() {
+    const next = !alwaysHide;
+    setAlwaysHide(next);
+    if (next) setMoneyHidden(true);
+    api.saveMoneySettings({ alwaysHide: next, visible: !moneyHidden }).catch(() => {});
+  }
 
   async function handleOpenSheet() {
     try {
@@ -114,13 +151,24 @@ function AppShell() {
           <button className="nav-tab nav-tab-sheet" onClick={handleOpenSheet} title="Open Google Sheet">
             <SheetIcon />
           </button>
+          <button className="nav-tab nav-tab-sheet" onClick={() => setShowSettings(true)} title="Settings">
+            <SettingsIcon />
+          </button>
         </div>
 
         <div className="main-view-section active show">
-          {tab === "history" && <HistoryView userEmail={user.email} />}
-          {tab === "budget" && <BudgetView />}
-          {tab === "debt" && <DebtLedger />}
+          {tab === "history" && <HistoryView hidden={moneyHidden} />}
+          {tab === "budget" && <BudgetView hidden={moneyHidden} onToggleHidden={toggleMoneyHidden} />}
+          {tab === "debt" && <DebtLedger hidden={moneyHidden} />}
         </div>
+
+        <SettingsModal
+          open={showSettings}
+          onClose={() => setShowSettings(false)}
+          userEmail={user.email}
+          alwaysHide={alwaysHide}
+          onToggleAlwaysHide={toggleAlwaysHide}
+        />
       </div>
     </>
   );

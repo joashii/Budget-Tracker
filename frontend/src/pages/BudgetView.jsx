@@ -11,13 +11,12 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default function BudgetView() {
+export default function BudgetView({ hidden, onToggleHidden }) {
   const showToast = useToast();
 
   // --- balance panel state ---
   const [balance, setBalance] = useState(0);
   const [sources, setSources] = useState([]);
-  const [hidden, setHidden] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [showBalanceModal, setShowBalanceModal] = useState(false);
@@ -169,7 +168,7 @@ export default function BudgetView() {
               >
                 {hidden ? "••••••••" : fmt(balance)}
               </div>
-              <button className="balance-toggle-btn" onClick={() => setHidden((h) => !h)} title="Show / hide balance">
+              <button className="balance-toggle-btn" onClick={onToggleHidden} title="Show / hide balance">
                 {hidden ? (
                   <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>

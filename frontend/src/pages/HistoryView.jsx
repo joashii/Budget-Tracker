@@ -1,20 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { api, auth } from "../api/client";
-import { useToast } from "../components/Toast";
+import { api } from "../api/client";
 
-export default function HistoryView({ userEmail }) {
-  const showToast = useToast();
-
+export default function HistoryView({ hidden }) {
   const [rows, setRows] = useState(null);
   const [loadingTable, setLoadingTable] = useState(true);
 
-  const [enabled, setEnabled] = useState(false);
-  const [notifyEmail, setNotifyEmail] = useState("");
-  const [sheetUrl, setSheetUrl] = useState(null);
-  const [sendingTest, setSendingTest] = useState(false);
-
   function fmt(n) {
     return `₱${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+  }
+
+  function display(n) {
+    return hidden ? "••••" : fmt(n);
   }
 
   async function refreshHistoryTable() {
@@ -29,44 +25,9 @@ export default function HistoryView({ userEmail }) {
     }
   }
 
-  async function loadNotif() {
-    try {
-      const s = await api.getNotifSettings();
-      setEnabled(!!s.enabled);
-      setNotifyEmail(s.notifyEmail || userEmail || "");
-      const { url } = await api.getSpreadsheetUrl();
-      setSheetUrl(url);
-    } catch (e) {
-      showToast(e.message, "error");
-    }
-  }
-
   useEffect(() => {
     refreshHistoryTable();
-    loadNotif();
   }, []);
-
-  function save(next) {
-    api.saveNotifSettings(next).catch((e) => showToast(e.message, "error"));
-  }
-
-  function toggleEnabled() {
-    const next = !enabled;
-    setEnabled(next);
-    save({ enabled: next, notifyEmail });
-  }
-
-  async function sendTest() {
-    setSendingTest(true);
-    try {
-      const res = await api.sendTestNotification();
-      showToast(`Test email sent to ${res.sentTo}`, "success");
-    } catch (e) {
-      showToast(e.message, "error");
-    } finally {
-      setSendingTest(false);
-    }
-  }
 
   const sortedRows = rows ? [...rows].sort((a, b) => (Number(b.spendings) || 0) - (Number(a.spendings) || 0)) : [];
   const totalSpend = sortedRows.reduce((t, r) => t + (Number(r.spendings) || 0), 0);
@@ -116,8 +77,8 @@ export default function HistoryView({ userEmail }) {
                     <tr key={i}>
                       <td className="htbl-rank">{i + 1}</td>
                       <td className="htbl-name">{row.itemName || "—"}</td>
-                      <td className="htbl-spend">{fmt(spend)}</td>
-                      <td className={`htbl-budget ${over ? "htbl-over" : "htbl-under"}`}>{fmt(budget)}</td>
+                      <td className="htbl-spend">{display(spend)}</td>
+                      <td className={`htbl-budget ${over ? "htbl-over" : "htbl-under"}`}>{display(budget)}</td>
                     </tr>
                   );
                 })}
@@ -129,82 +90,12 @@ export default function HistoryView({ userEmail }) {
         {sortedRows.length > 0 && (
           <div className="history-totals-row">
             <span>Total</span>
-            <span>{fmt(totalSpend)}</span>
-            <span>{fmt(totalBudget)}</span>
+            <span>{display(totalSpend)}</span>
+            <span>{display(totalBudget)}</span>
           </div>
         )}
       </div>
 
-      {/* Notification Settings Panel */}
-      <div className="input-panel notif-panel">
-        <div className="history-header-row">
-          <div className="history-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-            </svg>
-            Daily Reminder <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginLeft: 6 }}>(Coming soon)</span>
-          </div>
-          <label className="notif-toggle-wrap" title="Enable daily spending reminder">
-            <input type="checkbox" checked={enabled} onChange={toggleEnabled} />
-            <span className="notif-toggle-slider"></span>
-          </label>
-        </div>
-
-        {enabled && (
-          <div className="notif-body" style={{ display: "flex" }}>
-            <p className="notif-desc">
-              You'll get one email nudge every day at 8:00 AM to remind you to log your spendings.
-            </p>
-
-            <div className="form-row">
-              <div className="form-label">Email</div>
-              <input
-                type="email"
-                value={notifyEmail}
-                onChange={(e) => setNotifyEmail(e.target.value)}
-                onBlur={() => save({ enabled, notifyEmail })}
-              />
-            </div>
-
-            <button
-              className="submit-action-btn"
-              onClick={sendTest}
-              disabled={sendingTest}
-              style={{ width: "100%" }}
-            >
-              {sendingTest ? "Sending..." : "Send test email now"}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Account */}
-      <div className="input-panel">
-        <div className="history-header-row" style={{ marginBottom: sheetUrl ? 14 : 0 }}>
-          <div className="history-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-            {userEmail}
-          </div>
-          <span
-            style={{ fontSize: 12, color: "rgba(255,255,255,0.4)", cursor: "pointer" }}
-            onClick={async () => {
-              await auth.logout();
-              window.location.reload();
-            }}
-          >
-            Sign out
-          </span>
-        </div>
-        {sheetUrl && (
-          <a href={sheetUrl} target="_blank" rel="noreferrer" style={{ textDecoration: "none", width: "100%" }}>
-            <button className="action-btn" style={{ width: "100%" }}>Open Google Sheet ↗</button>
-          </a>
-        )}
-      </div>
     </>
   );
 }

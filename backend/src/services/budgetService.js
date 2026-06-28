@@ -355,6 +355,32 @@ async function saveNotifSettings(authClient, spreadsheetId, settings) {
   return "Success";
 }
 
+// ---------- Money visibility settings ----------
+// alwaysHide: if true, amounts always start masked (••••) every time the app
+// opens, regardless of what the user did last session.
+// visible: the user's last manual show/hide state, only consulted when
+// alwaysHide is false (lets the masked/unmasked state persist across visits).
+
+async function getMoneySettings(authClient, spreadsheetId) {
+  const rows = await sheetsApi.getValues(authClient, spreadsheetId, `'Settings'!A2:B`);
+  const row = rows.find((r) => r[0] === "moneySettings");
+  if (!row) return { alwaysHide: false, visible: true };
+  try {
+    const parsed = JSON.parse(row[1]);
+    return { alwaysHide: !!parsed.alwaysHide, visible: parsed.visible !== false };
+  } catch {
+    return { alwaysHide: false, visible: true };
+  }
+}
+
+async function saveMoneySettings(authClient, spreadsheetId, settings) {
+  const rows = await sheetsApi.getValues(authClient, spreadsheetId, `'Settings'!A2:B`);
+  const idx = rows.findIndex((r) => r[0] === "moneySettings");
+  const rowNum = idx === -1 ? rows.length + 2 : idx + 2;
+  await sheetsApi.setValues(authClient, spreadsheetId, `'Settings'!A${rowNum}:B${rowNum}`, [["moneySettings", JSON.stringify(settings)]]);
+  return "Success";
+}
+
 module.exports = {
   ensureUserSpreadsheet,
   ensureTabs,
@@ -373,4 +399,6 @@ module.exports = {
   deleteDebtRecord,
   getNotifSettings,
   saveNotifSettings,
+  getMoneySettings,
+  saveMoneySettings,
 };

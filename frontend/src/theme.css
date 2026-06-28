@@ -1813,3 +1813,26 @@ input[type=number] {
     padding: 14px 10px;
   }
 }
+
+/* ==========================================
+   SETTINGS MODAL
+   ========================================== */
+.settings-modal-card {
+  max-width: 520px !important;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.settings-section {
+  padding: 16px 0;
+  border-top: 1px solid var(--border-color);
+}
+
+.settings-section:first-of-type {
+  border-top: none;
+  padding-top: 6px;
+}
+
+.settings-section .notif-desc {
+  margin-top: 10px;
+}

@@ -25,7 +25,7 @@ const ReceivablesIcon = () => (
   </svg>
 );
 
-export default function DebtLedger() {
+export default function DebtLedger({ hidden }) {
   const showToast = useToast();
 
   const [ledgerType, setLedgerType] = useState("Payables");
@@ -49,6 +49,10 @@ export default function DebtLedger() {
 
   function fmt(n) {
     return `₱${Number(n).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+  }
+
+  function display(n) {
+    return hidden ? "••••" : fmt(n);
   }
 
   async function loadTotals() {
@@ -137,14 +141,14 @@ export default function DebtLedger() {
           <PayablesIcon />
           <div>
             <div className="card-label">Payables</div>
-            <div className="card-value">{fmt(totals.payables)}</div>
+            <div className="card-value">{display(totals.payables)}</div>
           </div>
         </div>
         <div className="summary-card" onClick={() => openDirectory("Receivables")}>
           <ReceivablesIcon />
           <div>
             <div className="card-label">Receivables</div>
-            <div className="card-value">{fmt(totals.receivables)}</div>
+            <div className="card-value">{display(totals.receivables)}</div>
           </div>
         </div>
       </div>
@@ -233,7 +237,7 @@ export default function DebtLedger() {
                 {records.map((r) => (
                   <div className="directory-item" key={r.id} onClick={() => openAction(r)}>
                     <span>{r.name} <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 12 }}>(due {r.dueDate})</span></span>
-                    <span>{fmt(r.balance)}</span>
+                    <span>{display(r.balance)}</span>
                   </div>
                 ))}
               </div>

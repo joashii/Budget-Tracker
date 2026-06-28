@@ -84,6 +84,14 @@ router.delete("/debts/:id", handle((req) =>
   budgetService.deleteDebtRecord(req.ctx.authClient, req.ctx.spreadsheetId, req.params.id)
 ));
 
+// ---- Money visibility settings ----
+router.get("/money-settings", handle((req) =>
+  budgetService.getMoneySettings(req.ctx.authClient, req.ctx.spreadsheetId)
+));
+router.put("/money-settings", handle((req) =>
+  budgetService.saveMoneySettings(req.ctx.authClient, req.ctx.spreadsheetId, req.body)
+));
+
 // ---- Notification settings ----
 router.get("/notifications", handle((req) =>
   budgetService.getNotifSettings(req.ctx.authClient, req.ctx.spreadsheetId)

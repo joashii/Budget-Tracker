@@ -44,6 +44,8 @@ export const api = {
   getNotifSettings: () => request("/api", "/notifications"),
   saveNotifSettings: (settings) => request("/api", "/notifications", { method: "PUT", body: JSON.stringify(settings) }),
   sendTestNotification: () => request("/api", "/notifications/test", { method: "POST" }),
+  getMoneySettings: () => request("/api", "/money-settings"),
+  saveMoneySettings: (settings) => request("/api", "/money-settings", { method: "PUT", body: JSON.stringify(settings) }),
 
   getSpreadsheetUrl: () => request("/api", "/spreadsheet-url"),
 };
