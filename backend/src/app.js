@@ -15,8 +15,8 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use("/auth", authRoutes);
-app.use("/api", apiRoutes);
 app.use("/api/cron", cronRoutes);
+app.use("/api", apiRoutes);
 
 app.get("/health", (req, res) => res.json({ ok: true }));
 
