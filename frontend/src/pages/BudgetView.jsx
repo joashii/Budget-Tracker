@@ -11,16 +11,13 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default function BudgetView({ hidden, onToggleHidden, weeklyBudget, onEditWeeklyBudget, wbRefreshKey }) {
+export default function BudgetView({ hidden, onToggleHidden }) {
   const showToast = useToast();
 
   // --- balance panel state ---
   const [balance, setBalance] = useState(0);
   const [sources, setSources] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // --- weekly budget summary state ---
-  const [wbSummary, setWbSummary] = useState({ items: [], totalSpend: 0 });
 
   const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [balanceInput, setBalanceInput] = useState("");
@@ -64,13 +61,7 @@ export default function BudgetView({ hidden, onToggleHidden, weeklyBudget, onEdi
 
   useEffect(() => {
     loadAll();
-  }, [wbRefreshKey]);
-
-  useEffect(() => {
-    api.getWeeklyBudgetSummary()
-      .then(setWbSummary)
-      .catch(() => setWbSummary({ items: [], totalSpend: 0 }));
-  }, [wbRefreshKey]);
+  }, []);
 
   async function handleSaveBalance() {
     const n = Number(balanceInput);
@@ -211,69 +202,6 @@ export default function BudgetView({ hidden, onToggleHidden, weeklyBudget, onEdi
             </div>
           ))}
         </div>
-      </div>
-
-      <div className="input-panel">
-        <div className="history-header-row">
-          <div className="history-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-            Weekly Budget
-          </div>
-          <span
-            style={{ fontSize: 12, color: "#91a9fc", cursor: "pointer" }}
-            onClick={onEditWeeklyBudget}
-          >
-            {weeklyBudget && weeklyBudget.status === "set" ? "Edit" : "Set budget"}
-          </span>
-        </div>
-
-        {weeklyBudget && weeklyBudget.status === "set" ? (
-          <>
-            <div className="wb-summary-row">
-              <span className="wb-summary-label">Budget</span>
-              <span className="wb-summary-money">{hidden ? "••••" : fmt(weeklyBudget.amount)}</span>
-            </div>
-            <div className="wb-summary-row">
-              <span className="wb-summary-label">Spent so far</span>
-              <span className="wb-summary-money">{hidden ? "••••" : fmt(wbSummary.totalSpend)}</span>
-            </div>
-            <div className="wb-summary-row">
-              <span className="wb-summary-label">Remaining</span>
-              <span className={weeklyBudget.amount - wbSummary.totalSpend >= 0 ? "wb-remaining-positive" : "wb-remaining-negative"}>
-                {hidden ? "••••" : fmt(weeklyBudget.amount - wbSummary.totalSpend)}
-              </span>
-            </div>
-            {weeklyBudget.source ? (
-              <p className="notif-desc" style={{ marginTop: 10 }}>Funded from {weeklyBudget.source}</p>
-            ) : weeklyBudget.description ? (
-              <p className="notif-desc" style={{ marginTop: 10 }}>{weeklyBudget.description}</p>
-            ) : null}
-
-            {wbSummary.items.length > 0 ? (
-              <div className="wb-items-list">
-                {wbSummary.items.map((it, idx) => (
-                  <div className="wb-summary-row" key={idx}>
-                    <span className="wb-summary-label">{it.itemName || "(unnamed)"}</span>
-                    <span className="wb-summary-money">{hidden ? "••••" : fmt(it.spendings)}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="notif-desc" style={{ marginTop: 10 }}>No spending logged yet this week.</p>
-            )}
-          </>
-        ) : (
-          <p className="notif-desc">
-            {weeklyBudget && weeklyBudget.status === "skipped"
-              ? "You skipped setting a budget for this week."
-              : "No weekly budget set yet."}
-          </p>
-        )}
       </div>
 
       <div className="input-panel">

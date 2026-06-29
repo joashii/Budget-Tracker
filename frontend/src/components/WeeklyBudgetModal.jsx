@@ -151,7 +151,7 @@ export default function WeeklyBudgetModal({ open, onClose, weeklyBudget, sources
               You don't have any other accounts yet. Add one in the Budget tab first, or use Manual entry.
             </p>
           ) : (
-            <div className="form-row">
+            <div className="form-row" style={{ position: "relative", overflow: "visible" }}>
               <div className="form-label">Source</div>
               <SourceDropdown options={fundingSources} value={source} onChange={setSource} />
             </div>

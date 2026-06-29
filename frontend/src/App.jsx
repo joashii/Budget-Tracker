@@ -193,14 +193,18 @@ function AppShell() {
         </div>
 
         <div className="main-view-section active show">
-          {tab === "history" && <HistoryView hidden={moneyHidden} />}
+          {tab === "history" && (
+            <HistoryView
+              hidden={moneyHidden}
+              weeklyBudget={weeklyBudget}
+              onEditWeeklyBudget={openWeeklyBudgetModal}
+              wbRefreshKey={wbRefreshKey}
+            />
+          )}
           {tab === "budget" && (
             <BudgetView
               hidden={moneyHidden}
               onToggleHidden={toggleMoneyHidden}
-              weeklyBudget={weeklyBudget}
-              onEditWeeklyBudget={openWeeklyBudgetModal}
-              wbRefreshKey={wbRefreshKey}
             />
           )}
           {tab === "debt" && <DebtLedger hidden={moneyHidden} />}
