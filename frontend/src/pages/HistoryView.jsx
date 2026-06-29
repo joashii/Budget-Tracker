@@ -140,9 +140,21 @@ export default function HistoryView({ hidden, weeklyBudget, onEditWeeklyBudget, 
               </span>
             </div>
             {weeklyBudget.source ? (
-              <p className="notif-desc" style={{ marginTop: 10 }}>Funded from {weeklyBudget.source}</p>
+              <div className="wb-funded-tag">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="1" y="4" width="22" height="16" rx="2"></rect>
+                  <line x1="1" y1="10" x2="23" y2="10"></line>
+                </svg>
+                Funded from {weeklyBudget.source}
+              </div>
             ) : weeklyBudget.description ? (
-              <p className="notif-desc" style={{ marginTop: 10 }}>{weeklyBudget.description}</p>
+              <div className="wb-funded-tag">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                {weeklyBudget.description}
+              </div>
             ) : null}
 
             {wbSummary.items.length > 0 ? (
