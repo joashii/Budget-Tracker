@@ -248,15 +248,23 @@ export default function BudgetView({ hidden, onToggleHidden, weeklyBudget, onEdi
                 {hidden ? "••••" : fmt(weeklyBudget.amount - wbSummary.totalSpend)}
               </span>
             </div>
-            {wbSummary.items.length > 0 && (
-              <p className="notif-desc" style={{ marginTop: 10 }}>
-                {wbSummary.items.length} item{wbSummary.items.length === 1 ? "" : "s"} logged this week
-                {weeklyBudget.source
-                  ? ` · funded from ${weeklyBudget.source}`
-                  : weeklyBudget.description
-                  ? ` · ${weeklyBudget.description}`
-                  : ""}
-              </p>
+            {weeklyBudget.source ? (
+              <p className="notif-desc" style={{ marginTop: 10 }}>Funded from {weeklyBudget.source}</p>
+            ) : weeklyBudget.description ? (
+              <p className="notif-desc" style={{ marginTop: 10 }}>{weeklyBudget.description}</p>
+            ) : null}
+
+            {wbSummary.items.length > 0 ? (
+              <div className="wb-items-list">
+                {wbSummary.items.map((it, idx) => (
+                  <div className="wb-summary-row" key={idx}>
+                    <span className="wb-summary-label">{it.itemName || "(unnamed)"}</span>
+                    <span className="wb-summary-money">{hidden ? "••••" : fmt(it.spendings)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="notif-desc" style={{ marginTop: 10 }}>No spending logged yet this week.</p>
             )}
           </>
         ) : (

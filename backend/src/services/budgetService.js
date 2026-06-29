@@ -478,7 +478,12 @@ async function getWeeklySpendingSummary(authClient, spreadsheetId) {
   const endDate = new Date(startDate);
   endDate.setDate(endDate.getDate() + 6);
 
-  const rows = await sheetsApi.getValues(authClient, spreadsheetId, `'Weekly'!A2:G`);
+  // Day-to-day spending actually accumulates in the "Today" tab regardless of
+  // which timeframe button was selected when it was entered - "Today", "Weekly"
+  // etc. are just a manual category tag, not separate logs. So we read from
+  // "Today" here too (same source as getTodaySpendings), just filtered to the
+  // current Monday-Sunday range instead of a single day.
+  const rows = await sheetsApi.getValues(authClient, spreadsheetId, `'Today'!A2:G`);
   const items = rows
     .filter((r) => {
       const d = new Date(`${String(r[0] || "").slice(0, 10)}T00:00:00`);

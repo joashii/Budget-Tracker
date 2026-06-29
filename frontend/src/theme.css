@@ -1894,6 +1894,18 @@ input[type=number] {
   color: rgba(255, 255, 255, 0.6);
 }
 
+.wb-items-list {
+  width: 100%;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.wb-items-list .wb-summary-row {
+  font-size: 13px;
+  padding: 8px 0;
+}
+
 .wb-summary-row span:last-child {
   font-weight: 600;
   font-size: 15px;
