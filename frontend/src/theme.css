@@ -1836,3 +1836,64 @@ input[type=number] {
 .settings-section .notif-desc {
   margin-top: 10px;
 }
+
+/* ==========================================
+   WEEKLY BUDGET - day-of-week picker
+   ========================================== */
+.weekday-picker {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.weekday-btn {
+  flex: 1;
+  min-width: 40px;
+  padding: 8px 0;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.weekday-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.weekday-btn.active {
+  background: #5b6fec;
+  border-color: #5b6fec;
+  color: #fff;
+}
+
+/* Weekly Budget summary panel */
+.wb-summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 14px;
+}
+
+.wb-summary-row:last-of-type {
+  border-bottom: none;
+}
+
+.wb-summary-label {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.wb-remaining-positive {
+  color: #6ee7a8;
+  font-weight: 600;
+}
+
+.wb-remaining-negative {
+  color: #ff8080;
+  font-weight: 600;
+}

@@ -46,6 +46,12 @@ export const api = {
   sendTestNotification: () => request("/api", "/notifications/test", { method: "POST" }),
   getMoneySettings: () => request("/api", "/money-settings"),
   saveMoneySettings: (settings) => request("/api", "/money-settings", { method: "PUT", body: JSON.stringify(settings) }),
+  getWeeklyBudget: () => request("/api", "/weekly-budget"),
+  saveWeeklyBudget: (payload) => request("/api", "/weekly-budget", { method: "PUT", body: JSON.stringify(payload) }),
+  skipWeeklyBudget: () => request("/api", "/weekly-budget/skip", { method: "POST" }),
+  getWeeklyBudgetSummary: () => request("/api", "/weekly-budget/summary"),
+  getWeeklyBudgetSettings: () => request("/api", "/weekly-budget-settings"),
+  saveWeeklyBudgetSettings: (settings) => request("/api", "/weekly-budget-settings", { method: "PUT", body: JSON.stringify(settings) }),
 
   getSpreadsheetUrl: () => request("/api", "/spreadsheet-url"),
 };

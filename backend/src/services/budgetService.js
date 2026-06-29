@@ -7,7 +7,7 @@ const IGNORED_SHEETS = [
   "today", "weekly", "monthly", "yearly",
   "payables", "receivables",
   "history", "dashboard", "settings",
-  "cash on hand",
+  "cash on hand", "weekly budget",
 ];
 
 const TAB_SCHEMA = [
@@ -20,6 +20,7 @@ const TAB_SCHEMA = [
   { name: "Receivables", cols: ["Name", "Amount", "Description", "Date Managed", "Due Date", "Settled", "Balance", "Status"] },
   { name: "Cash on Hand", cols: ["Date", "Description", "Amount In", "Amount Out", "Balance"] },
   { name: "Bank Account", cols: ["Deposit or Withdraw", "Amount", "Date", "Time", "Description", "Running Balance"] },
+  { name: "Weekly Budget", cols: ["WeekStart", "Amount", "Source", "Description", "Status", "Timestamp"] },
   { name: "Settings", cols: ["Key", "Value"] },
 ];
 
@@ -381,6 +382,141 @@ async function saveMoneySettings(authClient, spreadsheetId, settings) {
   return "Success";
 }
 
+// ---------- Weekly Budget ----------
+// One row per ISO week (Monday-Sunday) in the "Weekly Budget" tab:
+// [WeekStart, Amount, Source, Description, Status, Timestamp]
+// Status is "set" (money has been allocated) or "skipped" (user dismissed the
+// popup for this week without setting an amount).
+//
+// If `source` is given, the amount is withdrawn from that account and
+// deposited into Cash on Hand (real money movement, via processWalletTransaction).
+// If `source` is empty, the amount is just added directly to Cash on Hand
+// with `description` as the note - no tracked account loses money, since this
+// represents money from outside the app (e.g. an allowance, a cash gift).
+
+function mondayOf(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  const day = d.getDay(); // 0 = Sunday ... 6 = Saturday
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function getWeeklyBudget(authClient, spreadsheetId) {
+  const weekStart = mondayOf(todayStr());
+  const rows = await sheetsApi.getValues(authClient, spreadsheetId, `'Weekly Budget'!A2:F`);
+  const row = rows.find((r) => r[0] === weekStart);
+  if (!row) return { weekStart, amount: 0, source: "", description: "", status: "unset" };
+  return {
+    weekStart,
+    amount: Number(row[1]) || 0,
+    source: row[2] || "",
+    description: row[3] || "",
+    status: row[4] || "unset",
+  };
+}
+
+async function saveWeeklyBudget(authClient, spreadsheetId, { amount, source, description }) {
+  const weekStart = mondayOf(todayStr());
+  const today = todayStr();
+  const rows = await sheetsApi.getValues(authClient, spreadsheetId, `'Weekly Budget'!A2:F`);
+  const idx = rows.findIndex((r) => r[0] === weekStart);
+
+  // If editing a week that was already "set", reverse the original money
+  // movement first so we don't double-count when the new amount is applied.
+  if (idx !== -1) {
+    const prev = rows[idx];
+    const prevAmount = Number(prev[1]) || 0;
+    const prevSource = prev[2] || "";
+    const prevStatus = prev[4] || "";
+    if (prevStatus === "set" && prevAmount > 0) {
+      if (prevSource) {
+        await processWalletTransaction(authClient, spreadsheetId, prevSource, "deposit", prevAmount, today, "Weekly budget edited - reversing previous allocation", false);
+      } else {
+        await addCashOnHandTransaction(authClient, spreadsheetId, today, "Weekly budget edited - reversing previous allocation", 0, prevAmount);
+      }
+    }
+  }
+
+  const num = Number(amount) || 0;
+  const cleanSource = (source || "").trim();
+  if (num > 0) {
+    if (cleanSource) {
+      await processWalletTransaction(authClient, spreadsheetId, cleanSource, "withdrawal", num, today, description || `Weekly budget from ${cleanSource}`, false);
+    } else {
+      await addCashOnHandTransaction(authClient, spreadsheetId, today, description || "Weekly budget", num, 0);
+    }
+  }
+  await rebuildBalanceFormula(authClient, spreadsheetId);
+
+  const rowNum = idx === -1 ? rows.length + 2 : idx + 2;
+  await sheetsApi.setValues(authClient, spreadsheetId, `'Weekly Budget'!A${rowNum}:F${rowNum}`, [
+    [weekStart, num, cleanSource, description || "", "set", new Date().toISOString()],
+  ]);
+
+  return "Success";
+}
+
+async function skipWeeklyBudget(authClient, spreadsheetId) {
+  const weekStart = mondayOf(todayStr());
+  const rows = await sheetsApi.getValues(authClient, spreadsheetId, `'Weekly Budget'!A2:F`);
+  const idx = rows.findIndex((r) => r[0] === weekStart);
+  const rowNum = idx === -1 ? rows.length + 2 : idx + 2;
+  await sheetsApi.setValues(authClient, spreadsheetId, `'Weekly Budget'!A${rowNum}:F${rowNum}`, [
+    [weekStart, 0, "", "", "skipped", new Date().toISOString()],
+  ]);
+  return "Success";
+}
+
+async function getWeeklySpendingSummary(authClient, spreadsheetId) {
+  const weekStart = mondayOf(todayStr());
+  const startDate = new Date(`${weekStart}T00:00:00`);
+  const endDate = new Date(startDate);
+  endDate.setDate(endDate.getDate() + 6);
+
+  const rows = await sheetsApi.getValues(authClient, spreadsheetId, `'Weekly'!A2:G`);
+  const items = rows
+    .filter((r) => {
+      const d = new Date(`${String(r[0] || "").slice(0, 10)}T00:00:00`);
+      return d >= startDate && d <= endDate;
+    })
+    .map((r) => ({
+      itemName: String(r[3] || ""),
+      spendings: Number(r[4]) || 0,
+      budget: Number(r[5]) || 0,
+    }));
+
+  const totalSpend = items.reduce((t, r) => t + r.spendings, 0);
+  return { weekStart, items, totalSpend };
+}
+
+// ---------- Weekly Budget popup settings ----------
+// dayOfWeek follows JS Date.getDay(): 0 = Sunday ... 6 = Saturday.
+
+async function getWeeklyBudgetSettings(authClient, spreadsheetId) {
+  const rows = await sheetsApi.getValues(authClient, spreadsheetId, `'Settings'!A2:B`);
+  const row = rows.find((r) => r[0] === "weeklyBudgetSettings");
+  if (!row) return { enabled: false, dayOfWeek: 1 };
+  try {
+    const parsed = JSON.parse(row[1]);
+    return { enabled: !!parsed.enabled, dayOfWeek: Number.isInteger(parsed.dayOfWeek) ? parsed.dayOfWeek : 1 };
+  } catch {
+    return { enabled: false, dayOfWeek: 1 };
+  }
+}
+
+async function saveWeeklyBudgetSettings(authClient, spreadsheetId, settings) {
+  const rows = await sheetsApi.getValues(authClient, spreadsheetId, `'Settings'!A2:B`);
+  const idx = rows.findIndex((r) => r[0] === "weeklyBudgetSettings");
+  const rowNum = idx === -1 ? rows.length + 2 : idx + 2;
+  await sheetsApi.setValues(authClient, spreadsheetId, `'Settings'!A${rowNum}:B${rowNum}`, [["weeklyBudgetSettings", JSON.stringify(settings)]]);
+  return "Success";
+}
+
 module.exports = {
   ensureUserSpreadsheet,
   ensureTabs,
@@ -401,4 +537,10 @@ module.exports = {
   saveNotifSettings,
   getMoneySettings,
   saveMoneySettings,
+  getWeeklyBudget,
+  saveWeeklyBudget,
+  skipWeeklyBudget,
+  getWeeklySpendingSummary,
+  getWeeklyBudgetSettings,
+  saveWeeklyBudgetSettings,
 };

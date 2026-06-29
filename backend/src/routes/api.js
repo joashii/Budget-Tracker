@@ -109,4 +109,24 @@ router.post("/notifications/test", handle(async (req) => {
   return { ok: true, sentTo: toEmail };
 }));
 
+// ---- Weekly Budget ----
+router.get("/weekly-budget", handle((req) =>
+  budgetService.getWeeklyBudget(req.ctx.authClient, req.ctx.spreadsheetId)
+));
+router.put("/weekly-budget", handle((req) =>
+  budgetService.saveWeeklyBudget(req.ctx.authClient, req.ctx.spreadsheetId, req.body)
+));
+router.post("/weekly-budget/skip", handle((req) =>
+  budgetService.skipWeeklyBudget(req.ctx.authClient, req.ctx.spreadsheetId)
+));
+router.get("/weekly-budget/summary", handle((req) =>
+  budgetService.getWeeklySpendingSummary(req.ctx.authClient, req.ctx.spreadsheetId)
+));
+router.get("/weekly-budget-settings", handle((req) =>
+  budgetService.getWeeklyBudgetSettings(req.ctx.authClient, req.ctx.spreadsheetId)
+));
+router.put("/weekly-budget-settings", handle((req) =>
+  budgetService.saveWeeklyBudgetSettings(req.ctx.authClient, req.ctx.spreadsheetId, req.body)
+));
+
 module.exports = router;

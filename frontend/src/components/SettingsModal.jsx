@@ -11,6 +11,11 @@ export default function SettingsModal({ open, onClose, userEmail, alwaysHide, on
   const [sendingTest, setSendingTest] = useState(false);
   const [sheetUrl, setSheetUrl] = useState(null);
 
+  const [wbEnabled, setWbEnabled] = useState(false);
+  const [wbDay, setWbDay] = useState(1);
+
+  const DAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
   useEffect(() => {
     if (!open) return;
     api.getNotifSettings()
@@ -22,9 +27,30 @@ export default function SettingsModal({ open, onClose, userEmail, alwaysHide, on
     api.getSpreadsheetUrl()
       .then(({ url }) => setSheetUrl(url))
       .catch(() => {});
+    api.getWeeklyBudgetSettings()
+      .then((s) => {
+        setWbEnabled(!!s.enabled);
+        setWbDay(s.dayOfWeek);
+      })
+      .catch((e) => showToast(e.message, "error"));
   }, [open]);
 
   if (!open) return null;
+
+  function saveWeeklyBudgetSettings(next) {
+    api.saveWeeklyBudgetSettings(next).catch((e) => showToast(e.message, "error"));
+  }
+
+  function toggleWbEnabled() {
+    const next = !wbEnabled;
+    setWbEnabled(next);
+    saveWeeklyBudgetSettings({ enabled: next, dayOfWeek: wbDay });
+  }
+
+  function pickWbDay(d) {
+    setWbDay(d);
+    saveWeeklyBudgetSettings({ enabled: wbEnabled, dayOfWeek: d });
+  }
 
   function saveNotif(next) {
     api.saveNotifSettings(next).catch((e) => showToast(e.message, "error"));
@@ -75,6 +101,44 @@ export default function SettingsModal({ open, onClose, userEmail, alwaysHide, on
                 ? "Amounts will always start masked (••••) every time you open the app."
                 : "Amounts will remember whatever show/hide state you left them in last time."}
             </p>
+          </div>
+
+          {/* Weekly Budget */}
+          <div className="settings-section">
+            <div className="history-header-row">
+              <div className="history-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                Weekly Budget
+              </div>
+              <label className="notif-toggle-wrap" title="Enable the weekly budget popup">
+                <input type="checkbox" checked={wbEnabled} onChange={toggleWbEnabled} />
+                <span className="notif-toggle-slider"></span>
+              </label>
+            </div>
+
+            {wbEnabled && (
+              <div className="notif-body" style={{ display: "flex" }}>
+                <p className="notif-desc">
+                  On your chosen day, after 8:00 AM, you'll be asked to set this week's budget if you haven't yet.
+                </p>
+                <div className="weekday-picker">
+                  {DAY_LABELS.map((label, idx) => (
+                    <button
+                      key={idx}
+                      className={`weekday-btn${wbDay === idx ? " active" : ""}`}
+                      onClick={() => pickWbDay(idx)}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Daily Reminder */}

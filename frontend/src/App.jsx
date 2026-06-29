@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import HistoryView from "./pages/HistoryView";
 import BudgetView from "./pages/BudgetView";
 import DebtLedger from "./pages/DebtLedger";
+import WeeklyBudgetModal from "./components/WeeklyBudgetModal";
 
 const TABS = [
   {
@@ -68,6 +69,11 @@ function AppShell() {
   const [alwaysHide, setAlwaysHide] = useState(false);
   const [moneyHidden, setMoneyHidden] = useState(false);
 
+  const [sources, setSources] = useState([]);
+  const [weeklyBudget, setWeeklyBudget] = useState(null);
+  const [showWeeklyBudgetModal, setShowWeeklyBudgetModal] = useState(false);
+  const [wbRefreshKey, setWbRefreshKey] = useState(0);
+
   const params = new URLSearchParams(window.location.search);
   const authError = params.get("authError");
 
@@ -87,7 +93,30 @@ function AppShell() {
         setMoneyHidden(s.alwaysHide ? true : !s.visible);
       })
       .catch(() => {});
+    api.getSources().then(setSources).catch(() => {});
   }, [user]);
+
+  // Weekly Budget: load this week's status + the popup settings, then decide
+  // whether to auto-show the popup (chosen day, after 8 AM, not yet set/skipped).
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([api.getWeeklyBudget(), api.getWeeklyBudgetSettings()])
+      .then(([wb, settings]) => {
+        setWeeklyBudget(wb);
+        if (!settings.enabled) return;
+        const now = new Date();
+        const isChosenDay = now.getDay() === settings.dayOfWeek;
+        const isPast8AM = now.getHours() >= 8;
+        if (isChosenDay && isPast8AM && wb.status === "unset") {
+          setShowWeeklyBudgetModal(true);
+        }
+      })
+      .catch(() => {});
+  }, [user, wbRefreshKey]);
+
+  function refreshWeeklyBudget() {
+    setWbRefreshKey((k) => k + 1);
+  }
 
   function toggleMoneyHidden() {
     const next = !moneyHidden;
@@ -158,7 +187,15 @@ function AppShell() {
 
         <div className="main-view-section active show">
           {tab === "history" && <HistoryView hidden={moneyHidden} />}
-          {tab === "budget" && <BudgetView hidden={moneyHidden} onToggleHidden={toggleMoneyHidden} />}
+          {tab === "budget" && (
+            <BudgetView
+              hidden={moneyHidden}
+              onToggleHidden={toggleMoneyHidden}
+              weeklyBudget={weeklyBudget}
+              onEditWeeklyBudget={() => setShowWeeklyBudgetModal(true)}
+              wbRefreshKey={wbRefreshKey}
+            />
+          )}
           {tab === "debt" && <DebtLedger hidden={moneyHidden} />}
         </div>
 
@@ -168,6 +205,14 @@ function AppShell() {
           userEmail={user.email}
           alwaysHide={alwaysHide}
           onToggleAlwaysHide={toggleAlwaysHide}
+        />
+
+        <WeeklyBudgetModal
+          open={showWeeklyBudgetModal}
+          onClose={() => setShowWeeklyBudgetModal(false)}
+          weeklyBudget={weeklyBudget}
+          sources={sources}
+          onSaved={refreshWeeklyBudget}
         />
       </div>
     </>
