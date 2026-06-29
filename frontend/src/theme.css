@@ -1922,3 +1922,38 @@ input[type=number] {
   font-weight: 700 !important;
   font-size: 17px !important;
 }
+
+/* ==========================================
+   WEEKLY BUDGET MODAL - source/manual toggle
+   ========================================== */
+.wb-source-toggle {
+  display: flex;
+  gap: 6px;
+  margin: 16px 0 14px;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+
+.wb-toggle-pill {
+  flex: 1;
+  padding: 9px 0;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.wb-toggle-pill:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.wb-toggle-pill.active {
+  background: #5b6fec;
+  color: #fff;
+}

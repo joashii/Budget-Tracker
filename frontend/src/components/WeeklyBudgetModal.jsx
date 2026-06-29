@@ -101,7 +101,7 @@ export default function WeeklyBudgetModal({ open, onClose, weeklyBudget, sources
           <h2 className="settle-modal-title">
             {allowSkip ? "Set your weekly budget?" : "Edit weekly budget"}
           </h2>
-          <p className="notif-desc" style={{ marginBottom: 16 }}>
+          <p className="notif-desc" style={{ marginBottom: 18 }}>
             This becomes your Cash on Hand for the week. You can skip this and decide later, and it's always editable afterward.
           </p>
 
@@ -116,16 +116,24 @@ export default function WeeklyBudgetModal({ open, onClose, weeklyBudget, sources
             />
           </div>
 
-          <div className="history-header-row" style={{ margin: "14px 0 6px" }}>
-            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>
-              {useManual ? "Manual entry - no account will be deducted" : "Take this amount from an account"}
-            </span>
-            <span
-              style={{ fontSize: 12, color: "#91a9fc", cursor: "pointer" }}
-              onClick={() => setUseManual((m) => !m)}
+          <div className="wb-source-toggle">
+            <button
+              type="button"
+              className={`wb-toggle-pill${!useManual ? " active" : ""}`}
+              onClick={() => {
+                setUseManual(false);
+                if (!source && fundingSources.length > 0) setSource(fundingSources[0].name);
+              }}
             >
-              {useManual ? "Choose a source instead" : "Enter manually instead"}
-            </span>
+              From an account
+            </button>
+            <button
+              type="button"
+              className={`wb-toggle-pill${useManual ? " active" : ""}`}
+              onClick={() => setUseManual(true)}
+            >
+              Manual entry
+            </button>
           </div>
 
           {useManual ? (
@@ -138,14 +146,23 @@ export default function WeeklyBudgetModal({ open, onClose, weeklyBudget, sources
                 placeholder="e.g. Allowance from mom"
               />
             </div>
+          ) : fundingSources.length === 0 ? (
+            <p className="notif-desc" style={{ color: "#ff8080" }}>
+              You don't have any other accounts yet. Add one in the Budget tab first, or use Manual entry.
+            </p>
           ) : (
             <div className="form-row">
               <div className="form-label">Source</div>
               <SourceDropdown options={fundingSources} value={source} onChange={setSource} />
             </div>
           )}
+          <p className="notif-desc" style={{ marginTop: 8, fontSize: 12 }}>
+            {useManual
+              ? "No account will be deducted - this is money from outside the app."
+              : "Withdraws this amount from the source above and adds it to Cash on Hand."}
+          </p>
 
-          <div className="settle-modal-footer" style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <div className="settle-modal-footer" style={{ display: "flex", gap: 10, marginTop: 22 }}>
             {allowSkip && (
               <button className="action-btn" style={{ flex: 1 }} onClick={handleSkip} disabled={saving}>
                 Skip this week

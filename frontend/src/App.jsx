@@ -108,7 +108,7 @@ function AppShell() {
         const isChosenDay = now.getDay() === settings.dayOfWeek;
         const isPast8AM = now.getHours() >= 8;
         if (isChosenDay && isPast8AM && wb.status === "unset") {
-          setShowWeeklyBudgetModal(true);
+          openWeeklyBudgetModal();
         }
       })
       .catch(() => {});
@@ -116,6 +116,13 @@ function AppShell() {
 
   function refreshWeeklyBudget() {
     setWbRefreshKey((k) => k + 1);
+  }
+
+  function openWeeklyBudgetModal() {
+    // Sources are only fetched once on login - refresh here so a source
+    // created after that (or in another tab/device) actually shows up.
+    api.getSources().then(setSources).catch(() => {});
+    setShowWeeklyBudgetModal(true);
   }
 
   function toggleMoneyHidden() {
@@ -192,7 +199,7 @@ function AppShell() {
               hidden={moneyHidden}
               onToggleHidden={toggleMoneyHidden}
               weeklyBudget={weeklyBudget}
-              onEditWeeklyBudget={() => setShowWeeklyBudgetModal(true)}
+              onEditWeeklyBudget={openWeeklyBudgetModal}
               wbRefreshKey={wbRefreshKey}
             />
           )}
