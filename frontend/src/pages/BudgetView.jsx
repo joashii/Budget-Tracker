@@ -236,11 +236,11 @@ export default function BudgetView({ hidden, onToggleHidden, weeklyBudget, onEdi
           <>
             <div className="wb-summary-row">
               <span className="wb-summary-label">Budget</span>
-              <span>{hidden ? "••••" : fmt(weeklyBudget.amount)}</span>
+              <span className="wb-summary-money">{hidden ? "••••" : fmt(weeklyBudget.amount)}</span>
             </div>
             <div className="wb-summary-row">
               <span className="wb-summary-label">Spent so far</span>
-              <span>{hidden ? "••••" : fmt(wbSummary.totalSpend)}</span>
+              <span className="wb-summary-money">{hidden ? "••••" : fmt(wbSummary.totalSpend)}</span>
             </div>
             <div className="wb-summary-row">
               <span className="wb-summary-label">Remaining</span>

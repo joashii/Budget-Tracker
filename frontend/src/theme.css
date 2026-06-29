@@ -1890,6 +1890,10 @@ input[type=number] {
   color: rgba(255, 255, 255, 0.6);
 }
 
+.wb-summary-money {
+  color: rgba(255, 255, 255, 0.6);
+}
+
 .wb-summary-row span:last-child {
   font-weight: 600;
   font-size: 15px;
